@@ -1,1 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ChurnShield — Predictive Analytics Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.6/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --navy: #1A2744;
+    --dark: #0F1A2E;
+    --blue: #378ADD;
+    --blue-light: #E8F1FB;
+    --teal: #0F6E56;
+    --green: #1D9E75;
+    --green-light: #E6F5EE;
+    --coral: #E24B4A;
+    --coral-light: #FCEBEB;
+    --amber: #BA7517;
+    --amber-light: #FBF0DA;
+    --gray: #6B7A8D;
+    --gray-light: #F4F6F9;
+    --gray-border: #E2E7ED;
+    --white: #FFFFFF;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: var(--gray-light); color: var(--navy); min-height: 100vh; font-size: 17px; }
 
+  .app-header {
+    background: var(--dark); color: white; padding: 18px 36px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 3px solid var(--blue);
+  }
+  .app-header svg { width: 30px; height: 30px; fill: var(--blue); }
+  .app-header h1 { font-size: 20px; font-weight: 600; letter-spacing: 2px; }
+  .app-header span { font-size: 13px; color: var(--gray); margin-left: 8px; }
+
+  .app-container { width: 100%; max-width: none; margin: 0; padding: 28px 32px 40px; min-height: calc(100vh - 84px); }
+
+  /* Steps Nav */
+  .steps-nav { display: flex; gap: 10px; margin-bottom: 36px; }
+  .step-btn {
+    flex: 1; padding: 14px 16px; border: 1px solid var(--gray-border);
+    background: white; border-radius: var(--radius); cursor: pointer;
+    text-align: center; transition: all 0.2s;
+  }
+  .step-btn .step-num { display: block; font-size: 12px; color: var(--gray); font-weight: 500; margin-bottom: 3px; }
+  .step-btn .step-label { font-size: 14px; font-weight: 500; color: var(--gray); }
+  .step-btn.active { border-color: var(--blue); background: var(--blue-light); }
+  .step-btn.active .step-num { color: var(--blue); }
+  .step-btn.active .step-label { color: var(--navy); }
+  .step-btn.completed { border-color: var(--green); }
+  .step-btn.completed .step-num { color: var(--green); }
+  .step-btn:not(.active):hover { border-color: var(--gray); }
+
+  /* Cards */
+  .card { width: 100%; background: white; border-radius: var(--radius-lg); border: 1px solid var(--gray-border); padding: 30px; margin-bottom: 24px; box-shadow: var(--shadow); }
+  .card-title { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .card-sub { font-size: 15px; color: var(--gray); margin-bottom: 24px; }
+
+  /* Upload Zone */
+  .upload-zone {
+    border: 2px dashed var(--gray-border); border-radius: var(--radius-lg);
+    padding: 64px 28px; text-align: center; cursor: pointer; transition: all 0.2s;
+    background: var(--gray-light);
+  }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--blue); background: var(--blue-light); }
+  .upload-zone svg { width: 44px; height: 44px; fill: var(--gray); margin-bottom: 14px; }
+  .upload-zone h3 { font-size: 20px; font-weight: 500; margin-bottom: 6px; }
+  .upload-zone p { font-size: 15px; color: var(--gray); }
+
+  .file-info { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: var(--gray-light); border-radius: var(--radius); margin-top: 18px; }
+  .file-icon { width: 46px; height: 46px; border-radius: 8px; background: var(--blue-light); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: var(--blue); }
+  .file-name { font-size: 16px; font-weight: 500; }
+  .file-meta { font-size: 13px; color: var(--gray); }
+
+  /* Preview Table */
+  .preview-wrap { overflow-x: auto; margin-top: 16px; border: 1px solid var(--gray-border); border-radius: var(--radius); }
+  .preview-wrap table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 650px; }
+  .preview-wrap th { background: var(--gray-light); padding: 10px 12px; text-align: left; font-weight: 500; color: var(--gray); border-bottom: 1px solid var(--gray-border); white-space: nowrap; }
+  .preview-wrap td { padding: 9px 12px; border-bottom: 1px solid var(--gray-border); white-space: nowrap; }
+
+  /* Mapping */
+  .mapping-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--gray-border); }
+  .mapping-row:last-child { border-bottom: none; }
+  .mapping-from { flex: 1; font-size: 14px; font-weight: 500; padding: 10px 14px; background: var(--gray-light); border-radius: var(--radius); }
+  .mapping-arrow { color: var(--gray); font-size: 20px; }
+  .mapping-select { flex: 1; padding: 10px 12px; border: 1px solid var(--gray-border); border-radius: var(--radius); font-size: 14px; background: white; color: var(--navy); }
+  .mapping-status { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+  .status-mapped { background: var(--green-light); color: var(--teal); }
+  .status-unmapped { background: var(--amber-light); color: var(--amber); }
+
+  .coverage-bar { margin-top: 20px; padding: 14px 18px; background: var(--gray-light); border-radius: var(--radius); }
+  .coverage-label { font-size: 13px; color: var(--gray); margin-bottom: 6px; }
+  .coverage-track { height: 6px; background: var(--gray-border); border-radius: 3px; overflow: hidden; }
+  .coverage-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.4s; }
+  .coverage-text { font-size: 14px; font-weight: 500; margin-top: 6px; color: var(--teal); }
+
+  /* Config */
+  .config-group { margin-bottom: 24px; }
+  .config-label { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+  .config-desc { font-size: 13px; color: var(--gray); margin-bottom: 12px; }
+  .plan-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .plan-chip {
+    padding: 10px 22px; border: 1px solid var(--gray-border); border-radius: var(--radius);
+    font-size: 14px; cursor: pointer; transition: all 0.15s; background: white; font-weight: 400;
+  }
+  .plan-chip:hover { border-color: var(--blue); }
+  .plan-chip.selected { border-color: var(--blue); background: var(--blue-light); color: var(--blue); font-weight: 500; border-width: 2px; }
+  .slider-group { margin-bottom: 16px; }
+  .slider-value { font-size: 26px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+  .slider-input { width: 100%; accent-color: var(--blue); }
+  .slider-range { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray); margin-top: 2px; }
+
+  /* Results */
+  .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .metric-card { background: var(--gray-light); padding: 16px 18px; border-radius: var(--radius); }
+  .metric-label { font-size: 13px; color: var(--gray); margin-bottom: 4px; }
+  .metric-value { font-size: 28px; font-weight: 600; }
+  .metric-sub { font-size: 12px; margin-top: 4px; }
+
+  .results-wrap { overflow-x: auto; border: 1px solid var(--gray-border); border-radius: var(--radius); }
+  .results-wrap table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 760px; }
+  .results-wrap th { background: var(--gray-light); padding: 12px 12px; text-align: left; font-weight: 500; color: var(--gray); border-bottom: 1px solid var(--gray-border); white-space: nowrap; }
+  .results-wrap td { padding: 12px 12px; border-bottom: 1px solid var(--gray-border); white-space: nowrap; }
+
+  .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .badge-high { background: var(--coral-light); color: var(--coral); }
+  .badge-medium { background: var(--amber-light); color: var(--amber); }
+  .badge-low { background: var(--green-light); color: var(--teal); }
+  .plan-reco { font-weight: 600; color: var(--teal); }
+
+  /* Buttons */
+  .btn { padding: 12px 26px; border-radius: var(--radius); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; font-family: inherit; }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: #2570B8; }
+  .btn-primary:disabled { background: var(--gray-border); color: var(--gray); cursor: not-allowed; }
+  .btn-outline { background: white; border: 1px solid var(--gray-border); color: var(--navy); }
+  .btn-outline:hover { background: var(--gray-light); }
+  .btn-success { background: var(--green); color: white; }
+  .btn-success:hover { background: var(--teal); }
+  .action-bar { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; flex-wrap: wrap; }
+
+  /* Loading */
+  .loading { text-align: center; padding: 40px; }
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--gray-border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 15px; color: var(--gray); }
+
+  /* Alert */
+  .alert { padding: 16px 18px; border-radius: var(--radius); margin-bottom: 18px; font-size: 14px; }
+  .alert-error { background: var(--coral-light); color: var(--coral); }
+  .alert-success { background: var(--green-light); color: var(--teal); }
+
+  /* Plan column picker (Upload step) */
+  .plan-column-picker { margin-top: 22px; padding: 18px 20px; background: var(--blue-light); border-radius: var(--radius); border: 1px solid var(--gray-border); }
+  .plan-column-label { display: block; font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+  .plan-column-hint { font-size: 13px; color: var(--gray); margin-bottom: 12px; }
+  .plan-column-select { width: 100%; padding: 11px 14px; border: 1px solid var(--gray-border); border-radius: var(--radius); font-size: 14px; background: white; color: var(--navy); cursor: pointer; }
+  .plan-column-select:focus { outline: none; border-color: var(--blue); }
+
+  /* Checkbox list of plans (Config step) */
+  .plan-checkbox-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+  .plan-checkbox-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: white; border: 1px solid var(--gray-border); border-radius: var(--radius); cursor: pointer; transition: all 0.15s; }
+  .plan-checkbox-item:hover { border-color: var(--blue); }
+  .plan-checkbox-item.checked { border-color: var(--blue); background: var(--blue-light); }
+  .plan-checkbox-item input { accent-color: var(--blue); width: 16px; height: 16px; cursor: pointer; }
+  .plan-checkbox-item span { font-size: 14px; color: var(--navy); font-weight: 500; }
+
+  /* Upsell toggle (Config step) */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--gray-light); border-radius: var(--radius); }
+  .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--gray-border); transition: 0.25s; border-radius: 24px; }
+  .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; transition: 0.25s; border-radius: 50%; }
+  .toggle-switch input:checked + .toggle-slider { background: var(--blue); }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+  @media (max-width: 640px) {
+    .app-container { padding: 16px 14px 26px; min-height: auto; }
+    .metrics-grid { grid-template-columns: 1fr; }
+    .steps-nav { flex-wrap: wrap; }
+    .step-btn { flex: 1 1 45%; }
+    .mapping-row { flex-wrap: wrap; }
+    .mapping-from, .mapping-select { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const API_BASE = "http://localhost:5000/api";
+
+// ============================================================
+// MAIN APP
+// ============================================================
+function App() {
+  const defaultConfig = {
+    selectedPlans: null,     // null = "all plans selected (default)"
+    minConfidence: 70,
+    maxResults: 500,
+    upsellOnly: false,
+  };
+
+  const [step, setStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState(new Set());
+
+  // Data state
+  const [fileData, setFileData] = useState(null);
+  const [mapping, setMapping] = useState({});
+  const [coverage, setCoverage] = useState(null);
+  const [config, setConfig] = useState(defaultConfig);
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const goToStep = (s) => {
+    setError(null);
+    setStep(s);
+  };
+
+  const completeStep = (s) => {
+    setCompletedSteps(prev => new Set([...prev, s]));
+    setStep(s + 1);
+  };
+
+  const resetWorkflow = () => {
+    setStep(0);
+    setCompletedSteps(new Set());
+    setFileData(null);
+    setMapping({});
+    setCoverage(null);
+    setConfig(defaultConfig);
+    setResults(null);
+    setLoading(false);
+    setError(null);
+  };
+
+  const stepLabels = ["Upload", "Mapping", "Configure", "Results"];
+
+  return (
+    <div>
+      <header className="app-header">
+        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+        <h1>CHURNSHIELD</h1>
+        <span>Predictive analytics platform</span>
+      </header>
+
+      <div className="app-container">
+        <div className="steps-nav">
+          {stepLabels.map((label, i) => (
+            <div
+              key={i}
+              className={`step-btn ${step === i ? "active" : ""} ${completedSteps.has(i) ? "completed" : ""}`}
+              onClick={() => (completedSteps.has(i) || i <= step) && goToStep(i)}
+            >
+              <span className="step-num">0{i + 1}</span>
+              <span className="step-label">{label}</span>
+            </div>
+          ))}
+        </div>
+
+        {error && <div className="alert alert-error">{error}</div>}
+
+        {step === 0 && (
+          <UploadStep
+            fileData={fileData}
+            setFileData={setFileData}
+            setMapping={setMapping}
+            onComplete={() => completeStep(0)}
+            setLoading={setLoading}
+            setError={setError}
+            loading={loading}
+          />
+        )}
+        {step === 1 && (
+          <MappingStep
+            fileData={fileData}
+            mapping={mapping}
+            setMapping={setMapping}
+            coverage={coverage}
+            setCoverage={setCoverage}
+            onComplete={() => completeStep(1)}
+            onBack={() => goToStep(0)}
+            setLoading={setLoading}
+            setError={setError}
+            loading={loading}
+          />
+        )}
+        {step === 2 && (
+          <ConfigStep
+            fileData={fileData}
+            config={config}
+            setConfig={setConfig}
+            onComplete={() => completeStep(2)}
+            onBack={() => goToStep(1)}
+            setResults={setResults}
+            setLoading={setLoading}
+            setError={setError}
+            loading={loading}
+          />
+        )}
+        {step === 3 && (
+          <ResultsStep
+            results={results}
+            onBack={() => goToStep(2)}
+            onNewTest={resetWorkflow}
+            setError={setError}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+// ============================================================
+// STEP 1: UPLOAD
+// ============================================================
+function UploadStep({ fileData, setFileData, setMapping, onComplete, setLoading, setError, loading }) {
+  const fileInputRef = useRef(null);
+  const [dragover, setDragover] = useState(false);
+  const [planColumnLocal, setPlanColumnLocal] = useState("");
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setFileData(data);
+      if (data.auto_mapping) setMapping(data.auto_mapping);
+      setPlanColumnLocal(data.suggested_plan_column || "");
+    } catch (e) {
+      setError(`Upload failed: ${e.message}`);
+    }
+    setLoading(false);
+  };
+
+  // When the user overrides the plan column, push the update to the API
+  // so the insights / analyze endpoints know which column to segment on.
+  const handlePlanColumnChange = async (newCol) => {
+    setPlanColumnLocal(newCol);
+    if (!fileData?.auto_mapping) return;
+    const newMapping = { ...fileData.auto_mapping, current_plan: newCol };
+    setMapping(newMapping);
+    try {
+      const res = await fetch(`${API_BASE}/mapping`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mapping: newMapping }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      // Refresh the cached plan values so the Configure step sees the new catalog
+      setFileData({
+        ...fileData,
+        auto_mapping: newMapping,
+        suggested_plan_column: newCol,
+        plan_values: data.plan_values || [],
+      });
+    } catch (e) {
+      setError(`Could not update plan column: ${e.message}`);
+    }
+  };
+
+  const onDrop = (e) => { e.preventDefault(); setDragover(false); handleFile(e.dataTransfer.files[0]); };
+
+  return (
+    <div className="card">
+      <h2 className="card-title">Import your dataset</h2>
+      <p className="card-sub">Upload your customer data file — the model requires 10 core features</p>
+
+      <div
+        className={`upload-zone ${dragover ? "dragover" : ""}`}
+        onClick={() => fileInputRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDragover(true); }}
+        onDragLeave={() => setDragover(false)}
+        onDrop={onDrop}
+      >
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 18v-6H9.5l4.5-5 4.5 5H14v6h-4z"/></svg>
+        <h3>Drop a file here or click to browse</h3>
+        <p>CSV, XLSX — up to 500 MB</p>
+      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,.xlsx,.xls"
+        style={{ display: "none" }}
+        onChange={(e) => handleFile(e.target.files[0])}
+      />
+
+      {loading && <div className="loading"><div className="spinner" /><div className="loading-text">Processing file...</div></div>}
+
+      {fileData && (
+        <>
+          <div className="file-info">
+            <div className="file-icon">{fileData.filename.split('.').pop().toUpperCase()}</div>
+            <div>
+              <div className="file-name">{fileData.filename}</div>
+              <div className="file-meta">{fileData.rows.toLocaleString()} rows · {fileData.columns} columns</div>
+            </div>
+          </div>
+
+          <div className="preview-wrap">
+            <table>
+              <thead><tr>{fileData.column_names.map(c => <th key={c}>{c}</th>)}</tr></thead>
+              <tbody>
+                {fileData.preview.slice(0, 3).map((row, i) => (
+                  <tr key={i}>{fileData.column_names.map(c => <td key={c}>{String(row[c] ?? "")}</td>)}</tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="plan-column-picker">
+            <label className="plan-column-label">Which column is your customer plan?</label>
+            <p className="plan-column-hint">
+              {fileData.suggested_plan_column
+                ? `We detected "${fileData.suggested_plan_column}" — confirm or override below.`
+                : "We couldn't guess — pick the right column."}
+            </p>
+            <select
+              className="plan-column-select"
+              value={planColumnLocal}
+              onChange={(e) => handlePlanColumnChange(e.target.value)}
+            >
+              <option value="">— select a column —</option>
+              {fileData.column_names.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="action-bar">
+            <button
+              className="btn btn-primary"
+              onClick={onComplete}
+              disabled={!planColumnLocal}
+            >
+              Continue to mapping
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+
+// ============================================================
+// STEP 2: MAPPING
+// ============================================================
+const CORE_FEATURES = [
+  { key: "customer_id", label: "Customer ID", required: true },
+  { key: "phone", label: "Phone number", required: true },
+  { key: "current_plan", label: "Current plan", required: true },
+  { key: "monthly_cost", label: "Monthly bill / fee", required: true },
+  { key: "usage_primary", label: "Primary usage (data GB, balance...)", required: true },
+  { key: "usage_secondary", label: "Secondary usage (calls, transactions...)", required: true },
+  { key: "usage_tertiary", label: "Tertiary usage (SMS, logins...)", required: true },
+  { key: "complaints", label: "Complaints / support tickets", required: true },
+  { key: "tenure", label: "Account tenure (months)", required: true },
+  { key: "extra_usage", label: "Extra usage (intl calls, transfers...)", required: false },
+];
+
+function MappingStep({ fileData, mapping, setMapping, coverage, setCoverage, onComplete, onBack, setLoading, setError, loading }) {
+  if (!fileData) return null;
+
+  const columns = fileData.column_names;
+
+  const updateMapping = (featureKey, columnName) => {
+    const newMapping = { ...mapping, [featureKey]: columnName };
+    setMapping(newMapping);
+
+    const mapped = CORE_FEATURES.filter(f => newMapping[f.key] && newMapping[f.key] !== "").length;
+    setCoverage({ mapped, total: CORE_FEATURES.length, confidence: Math.round(mapped / CORE_FEATURES.length * 100) });
+  };
+
+  const handleValidate = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/mapping`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mapping }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setCoverage({ mapped: data.mapped, total: data.total, confidence: data.confidence });
+      onComplete();
+    } catch (e) {
+      setError(`Mapping failed: ${e.message}`);
+    }
+    setLoading(false);
+  };
+
+  const mapped = CORE_FEATURES.filter(f => mapping[f.key] && mapping[f.key] !== "").length;
+  const pct = Math.round(mapped / CORE_FEATURES.length * 100);
+
+  return (
+    <div className="card">
+      <h2 className="card-title">Feature mapping</h2>
+      <p className="card-sub">Match your dataset columns to the 10 features expected by the model</p>
+
+      {CORE_FEATURES.map(feat => {
+        const isMapped = mapping[feat.key] && mapping[feat.key] !== "";
+        return (
+          <div className="mapping-row" key={feat.key}>
+            <div className="mapping-from">{feat.label}{feat.required ? "" : " (optional)"}</div>
+            <span className="mapping-arrow">→</span>
+            <select
+              className="mapping-select"
+              value={mapping[feat.key] || ""}
+              onChange={(e) => updateMapping(feat.key, e.target.value)}
+            >
+              <option value="">— Select column —</option>
+              {columns.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <span className={`mapping-status ${isMapped ? "status-mapped" : "status-unmapped"}`}>
+              {isMapped ? "mapped" : "unmapped"}
+            </span>
+          </div>
+        );
+      })}
+
+      <div className="coverage-bar">
+        <div className="coverage-label">Model coverage</div>
+        <div className="coverage-track"><div className="coverage-fill" style={{ width: `${pct}%` }} /></div>
+        <div className="coverage-text">{mapped}/{CORE_FEATURES.length} features mapped — estimated confidence: {pct}%</div>
+      </div>
+
+      <div className="action-bar">
+        <button className="btn btn-outline" onClick={onBack}>Back</button>
+        <button className="btn btn-primary" onClick={handleValidate} disabled={mapped < 5 || loading}>
+          {loading ? "Validating..." : "Validate mapping"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+// ============================================================
+// STEP 3: CONFIGURE
+// ============================================================
+function ConfigStep({ fileData, config, setConfig, onComplete, onBack, setResults, setLoading, setError, loading }) {
+  // Source of truth for plans: API-provided `plan_values` (unique values in
+  // the plan column of the uploaded dataset). Falls back to preview-derived
+  // values for backward compatibility.
+  const planCol = fileData?.auto_mapping?.current_plan;
+  const apiPlans = Array.isArray(fileData?.plan_values) ? fileData.plan_values : [];
+  const previewPlans = planCol && fileData?.preview
+    ? [...new Set(fileData.preview.map(r => r[planCol]).filter(Boolean))].map(String)
+    : [];
+  const allPlans = apiPlans.length > 0 ? apiPlans : previewPlans;
+
+  // Default: every plan selected. The user unchecks what they want to exclude.
+  useEffect(() => {
+    if (config.selectedPlans === null && allPlans.length > 0) {
+      setConfig({ ...config, selectedPlans: [...allPlans] });
+    }
+  }, [allPlans.join("|")]);
+
+  const selected = config.selectedPlans || [];
+
+  const togglePlan = (plan) => {
+    const next = selected.includes(plan)
+      ? selected.filter(p => p !== plan)
+      : [...selected, plan];
+    setConfig({ ...config, selectedPlans: next });
+  };
+
+  const handleRun = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // If every plan is selected (the default), send null so the API
+      // treats it as "no filter". If the user narrowed the list, forward it.
+      const allSelected = selected.length === allPlans.length;
+      const targetPlans = allSelected ? null : selected;
+
+      const res = await fetch(`${API_BASE}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target_plans: targetPlans,
+          min_confidence: config.minConfidence,
+          max_results: config.maxResults,
+          upsell_only: !!config.upsellOnly,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setResults(data);
+      onComplete();
+    } catch (e) {
+      setError(`Analysis failed: ${e.message}`);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="card">
+      <h2 className="card-title">Configure your analysis</h2>
+      <p className="card-sub">Set the parameters for misaligned customer detection</p>
+
+      <div className="config-group">
+        <div className="config-label">Plans to include</div>
+        <div className="config-desc">
+          All plans detected in your dataset are considered by default. Uncheck any plan you want to exclude from the recommendations.
+        </div>
+        {allPlans.length === 0 ? (
+          <div className="alert alert-error">No plans detected — please go back and set the plan column.</div>
+        ) : (
+          <div className="plan-checkbox-list">
+            {allPlans.map(plan => {
+              const checked = selected.includes(plan);
+              return (
+                <label
+                  key={plan}
+                  className={`plan-checkbox-item ${checked ? "checked" : ""}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => togglePlan(plan)}
+                  />
+                  <span>{plan}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="config-group">
+        <div className="config-label">Upsell focus only</div>
+        <div className="config-desc">
+          Keep only recommendations where the suggested plan is more expensive on average than the customer's current plan.
+        </div>
+        <div className="toggle-row">
+          <span style={{ fontSize: 14, color: "var(--navy)" }}>
+            {config.upsellOnly ? "On — showing upsells only" : "Off — showing upsells and downsells"}
+          </span>
+          <label className="toggle-switch">
+            <input
+              type="checkbox"
+              checked={!!config.upsellOnly}
+              onChange={(e) => setConfig({ ...config, upsellOnly: e.target.checked })}
+            />
+            <span className="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div className="config-group">
+        <div className="slider-group">
+          <div className="config-label">Minimum confidence score</div>
+          <div className="config-desc">Only return results above this threshold</div>
+          <div className="slider-value">{config.minConfidence}%</div>
+          <input
+            type="range" className="slider-input" min="50" max="95" step="5"
+            value={config.minConfidence}
+            onChange={(e) => setConfig({ ...config, minConfidence: parseInt(e.target.value) })}
+          />
+          <div className="slider-range"><span>More results</span><span>Higher precision</span></div>
+        </div>
+      </div>
+
+      <div className="config-group">
+        <div className="slider-group">
+          <div className="config-label">Maximum results</div>
+          <div className="config-desc">Limit the number of flagged customers returned</div>
+          <div className="slider-value">{config.maxResults.toLocaleString()}</div>
+          <input
+            type="range" className="slider-input" min="50" max="2000" step="50"
+            value={config.maxResults}
+            onChange={(e) => setConfig({ ...config, maxResults: parseInt(e.target.value) })}
+          />
+          <div className="slider-range"><span>50</span><span>2,000</span></div>
+        </div>
+      </div>
+
+      {loading && <div className="loading"><div className="spinner" /><div className="loading-text">Training model & running analysis...</div></div>}
+
+      <div className="action-bar">
+        <button className="btn btn-outline" onClick={onBack}>Back</button>
+        <button
+          className="btn btn-primary"
+          onClick={handleRun}
+          disabled={loading || selected.length === 0}
+        >
+          {loading ? "Analyzing..." : "Run analysis"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+// ============================================================
+// STEP 4: RESULTS
+// ============================================================
+function ResultsStep({ results, onBack, onNewTest, setError }) {
+  if (!results) return null;
+
+  const m = results.metrics;
+  const rows = results.results || [];
+
+  const handleExport = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/export`);
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "churnshield_results.xlsx";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(`Export failed: ${e.message}`);
+    }
+  };
+
+  return (
+    <div>
+      <div className="card">
+        <h2 className="card-title">Misaligned customers</h2>
+        <p className="card-sub">{m.total_customers.toLocaleString()} customers analyzed · {m.flagged.toLocaleString()} flagged</p>
+
+        <div className="metrics-grid">
+          <div className="metric-card">
+            <div className="metric-label">Misaligned rate</div>
+            <div className="metric-value">{m.misaligned_rate}%</div>
+            <div className="metric-sub" style={{ color: "var(--coral)" }}>{m.flagged} customers to action</div>
+          </div>
+          <div className="metric-card">
+            <div className="metric-label">High priority</div>
+            <div className="metric-value">{m.high_priority}</div>
+            <div className="metric-sub" style={{ color: "var(--coral)" }}>immediate attention</div>
+          </div>
+          <div className="metric-card">
+            <div className="metric-label">Avg. confidence</div>
+            <div className="metric-value">{m.avg_confidence}%</div>
+            <div className="metric-sub" style={{ color: "var(--gray)" }}>model accuracy: {m.model_accuracy}%</div>
+          </div>
+        </div>
+
+        <div className="results-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer ID</th>
+                <th>Phone</th>
+                <th>Current plan</th>
+                <th>Recommended</th>
+                <th>Confidence</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.slice(0, 50).map((row, i) => (
+                <tr key={i}>
+                  <td>{row["Customer ID"]}</td>
+                  <td>{row["Phone"]}</td>
+                  <td>{row["Current Plan"]}</td>
+                  <td className="plan-reco">{row["Recommended Plan"]}</td>
+                  <td>{row["Confidence (%)"]}%</td>
+                  <td>
+                    <span className={`badge badge-${row.Priority.toLowerCase()}`}>{row.Priority}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {rows.length > 50 && <p style={{ fontSize: 12, color: "var(--gray)", marginTop: 8 }}>Showing 50 of {rows.length} results. Export to see all.</p>}
+
+        <div className="action-bar">
+          <button className="btn btn-outline" onClick={onNewTest}>New test</button>
+          <button className="btn btn-outline" onClick={onBack}>Edit parameters</button>
+          <button className="btn btn-success" onClick={handleExport}>Export to Excel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ============================================================
+// RENDER
+// ============================================================
+ReactDOM.render(<App />, document.getElementById("root"));
+</script>
+</body>
+</html>
