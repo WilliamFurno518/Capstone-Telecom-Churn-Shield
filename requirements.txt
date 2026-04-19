@@ -1,0 +1,26 @@
+# ChurnShield - unified dependencies
+# Covers Phase 1 (research notebook-like script) and Phase 2 (Flask product).
+
+# --- Core data stack ----------------------------------------------------
+pandas>=2.0
+numpy>=1.24
+scipy>=1.10
+
+# --- ML ----------------------------------------------------------------
+scikit-learn>=1.3
+xgboost>=2.0
+
+# --- Viz (Phase 1 only, harmless in Phase 2) ---------------------------
+matplotlib>=3.7
+seaborn>=0.12
+
+# --- Product API -------------------------------------------------------
+flask>=3.0
+flask-cors>=4.0
+werkzeug>=3.0
+
+# --- I/O ---------------------------------------------------------------
+openpyxl>=3.1
+
+# --- Misc --------------------------------------------------------------
+python-dotenv>=1.0
